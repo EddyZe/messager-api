@@ -1,6 +1,7 @@
 package ru.eddyz.messagerapi.controllers;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,8 +15,9 @@ import ru.eddyz.messagerapi.models.entities.Chat;
 import ru.eddyz.messagerapi.models.entities.User;
 import ru.eddyz.messagerapi.services.ChatService;
 import ru.eddyz.messagerapi.services.CreateChatService;
-import ru.eddyz.messagerapi.services.MessageService;
 import ru.eddyz.messagerapi.services.UserService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("chat")
@@ -25,26 +27,32 @@ public class ChatController {
 
     private final ChatService chatService;
     private final CreateChatService createChatService;
-    private final MessageService messageService;
     private final UserService userService;
 
-    @PostMapping("create")
-    public ResponseEntity<HttpStatus> createNewChat(@RequestBody CreateChatDTO createChatDTO,
+    @PostMapping("{username}/create")
+    public ResponseEntity<HttpStatus> createNewChat(@PathVariable("username") String username,
+                                                    @RequestBody @Valid CreateChatDTO createChatDTO,
                                                     BindingResult bindingResult) {
-        log.info("Начало создания нового чата");
+        log.info("starting to creating a chat");
 
         handlerBindingResult(bindingResult);
 
+        createChatDTO.setOwnerUsername(username);
+
         createChatService.createChat(createChatDTO);
 
-        log.info("Чат создан");
+        log.info("the chat has been created");
 
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
+    @GetMapping("{username}/chats")
+    public List<Chat> userChats(@PathVariable String username) {
+        return userService.findByUsername(username).getChats();
+    }
     @PostMapping("{chatId}/add-new-user")
     public ResponseEntity<HttpStatus> addNewUser(@PathVariable("chatId") Integer chatId,
-                                                 @RequestBody AddUserChatDTO addUserChatDTO,
+                                                 @RequestBody @Valid AddUserChatDTO addUserChatDTO,
                                                  BindingResult bindingResult) {
         log.info("add new user in chat [%s]".formatted(chatId));
 
@@ -52,25 +60,27 @@ public class ChatController {
 
         User newUser = userService.findByUsername(addUserChatDTO.getUsername());
         Chat currentChat = chatService.findById(chatId);
+
+        if (currentChat.getUsers().contains(newUser))
+            throw new ChatInvalidException("%s уже состоит в чате".formatted(newUser.getUsername()));
+
+
         currentChat.getUsers().add(newUser);
         newUser.getChats().add(currentChat);
 
         userService.update(newUser);
-        chatService.save(currentChat);
+        chatService.update(currentChat);
         log.info("%s added in chat[%s]".formatted(addUserChatDTO.getUsername(), chatId));
 
         return ResponseEntity.ok(HttpStatus.OK);
     }
 
+
     @DeleteMapping("{chatId}/delete")
     public ResponseEntity<HttpStatus> deleteChat(@PathVariable("chatId") Integer chatId) {
         log.info("start deleting a chat[%s]".formatted(chatId));
-        Chat chat = chatService.findById(chatId);
 
-
-        messageService.deleteByAll(chat.getMessages());
         chatService.deleteById(chatId);
-
 
         log.info("chat[%s] deleting completed".formatted(chatId));
         return ResponseEntity.ok(HttpStatus.OK);

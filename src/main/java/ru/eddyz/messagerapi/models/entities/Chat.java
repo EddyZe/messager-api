@@ -1,7 +1,6 @@
 package ru.eddyz.messagerapi.models.entities;
 
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
@@ -21,7 +20,6 @@ public class Chat implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonProperty("chat_id")
     @Column(name = "chat_id")
     private int chatId;
 
@@ -29,13 +27,15 @@ public class Chat implements Serializable {
     @Column(name = "chat_name")
     private String chatName;
 
-    @OneToMany(mappedBy = "chat")
+    @Column(name = "owner_username")
+    private String ownerUsername;
+
+    @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL)
     private List<Message> messages;
 
-    @ManyToMany(mappedBy = "chats")
+    @ManyToMany(mappedBy = "chats", cascade = CascadeType.ALL)
     private List<User> users;
 
-    @JsonProperty("created_at")
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

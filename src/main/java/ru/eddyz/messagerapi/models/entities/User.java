@@ -36,7 +36,7 @@ public class User implements Serializable {
     @Column (name = "last_name")
     private String lastName;
 
-    @ManyToMany
+    @ManyToMany(cascade = CascadeType.ALL)
     @JoinTable(
             name = "participant_chats",
             joinColumns = @JoinColumn(name = "user_id"),

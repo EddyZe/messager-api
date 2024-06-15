@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.eddyz.messagerapi.exeption.ChatInvalidException;
 import ru.eddyz.messagerapi.exeption.ChatNotFoundException;
+import ru.eddyz.messagerapi.exeption.UserInvalidException;
+import ru.eddyz.messagerapi.exeption.UserNotFoundException;
 import ru.eddyz.messagerapi.models.ErrorResponse;
 
 import java.time.LocalDateTime;
@@ -18,14 +20,28 @@ public class AdviceController {
 
     @ExceptionHandler(ChatInvalidException.class)
     public ResponseEntity<ErrorResponse> handlerChatInvalidException (ChatInvalidException e) {
-        log.info("chat invalid");
+        log.error("chat invalid");
         ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), LocalDateTime.now());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ChatNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlerChatNotFoundException (ChatNotFoundException e) {
-        log.info("chat not found");
+        log.error("chat not found");
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), LocalDateTime.now());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserInvalidException.class)
+    public ResponseEntity<ErrorResponse> handlerUserInvalidException (UserInvalidException e) {
+        log.error("user invalid");
+        ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), LocalDateTime.now());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlerUserNotFoundException (UserNotFoundException e) {
+        log.error("user not found");
         ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), LocalDateTime.now());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
